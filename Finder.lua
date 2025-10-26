@@ -24,6 +24,7 @@ scrollFrame.Parent = mainFrame
 
 -- Función para crear cada entrada de Brainrot
 local function createBrainrotEntry(name, rarity, valuePerSecond, serverId)
+    print("Creando entrada para: " .. name) -- Mensaje de depuración
     local entryFrame = Instance.new("Frame")
     entryFrame.Size = UDim2.new(1, 0, 0, 50)
     entryFrame.BackgroundTransparency = 1
@@ -77,6 +78,7 @@ end
 
 -- Función para detectar Brainrots en servidores externos
 local function detectBrainrots()
+    print("Detectando Brainrots...") -- Mensaje de depuración
     local brainrotModels = ReplicatedStorage:WaitForChild("Models"):WaitForChild("Animals")
     local brainrotNames = {}
     for _, model in pairs(brainrotModels:GetChildren()) do
@@ -103,6 +105,7 @@ end
 
 -- Detectar Brainrots y crear entradas en el hub
 local brainrotData = detectBrainrots()
+print("Brainrots detectados: " .. #brainrotData) -- Mensaje de depuración
 for _, data in ipairs(brainrotData) do
     createBrainrotEntry(data.name, data.rarity, data.valuePerSecond, data.serverId)
 end
