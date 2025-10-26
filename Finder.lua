@@ -1,8 +1,7 @@
 -- Pet Finder / Brainrot Finder Hub para Roblox Studio
--- Debe colocarse como LocalScript dentro de StarterGui o ScreenGui
+-- Colocar como LocalScript dentro de StarterGui
 
 local Players = game:GetService("Players")
-local TeleportService = game:GetService("TeleportService")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 
@@ -11,11 +10,10 @@ local MIN_VALUE_PER_SEC = 5_000_000
 local UI_NAME = "DantePetFinderHub"
 local HUB_WIDTH = 420
 local HUB_HEIGHT = 380
-local SCAN_INTERVAL = 3 -- segundos entre escaneos
 -- END CONFIG
 
 -- Evitar duplicados
-for _,v in pairs(game:GetService("CoreGui"):GetChildren()) do
+for _,v in pairs(LocalPlayer.PlayerGui:GetChildren()) do
     if v.Name == UI_NAME then v:Destroy() end
 end
 
@@ -23,7 +21,7 @@ end
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = UI_NAME
 screenGui.ResetOnSpawn = false
-screenGui.Parent = game:GetService("CoreGui")
+screenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") -- <-- ahora se ve en Studio
 
 -- Contenedor principal
 local main = Instance.new("Frame")
@@ -44,7 +42,7 @@ border.BorderSizePixel = 0
 border.ZIndex = 0
 
 -- Título
-local titleBar = Instance.new("Frame", main)
+local titleBar = Instance.new("Frame", main")
 titleBar.Size = UDim2.new(1,0,0,36)
 titleBar.BackgroundTransparency = 1
 local titleText = Instance.new("TextLabel", titleBar)
@@ -135,9 +133,8 @@ local function createListItem(info)
     joinBtn.TextColor3 = Color3.fromRGB(255,255,255)
     joinBtn.MouseButton1Click:Connect(function()
         if info.owner then
-            -- Teletransportar al jugador a la base
             local targetPlot = workspace.Plots:FindFirstChild(info.owner)
-            if targetPlot then
+            if targetPlot and targetPlot.PrimaryPart then
                 LocalPlayer.Character.HumanoidRootPart.CFrame = targetPlot.PrimaryPart.CFrame + Vector3.new(0,5,0)
             end
         end
@@ -146,14 +143,12 @@ local function createListItem(info)
     return container
 end
 
--- Actualizar la lista de Brainrots
+-- Actualizar lista de Brainrots
 local function updateList()
-    -- Limpiar lista
     for _,c in pairs(scroll:GetChildren()) do
         if c:IsA("Frame") then c:Destroy() end
     end
 
-    -- Recorrer todas las bases
     for _, plot in pairs(workspace.Plots:GetChildren()) do
         local ownerId = plot.Name
         for _, pet in pairs(plot:GetChildren()) do
@@ -170,14 +165,11 @@ local function updateList()
         end
     end
 
-    -- Ajustar tamaño del scroll
-    scroll.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y + 12)
+    scroll.CanvasSize = UDim2.new(0,0,0,scroll.UIListLayout.AbsoluteContentSize.Y + 12)
 end
 
 -- Loop de actualización periódica
-RunService.Heartbeat:Connect(function()
-    updateList()
-end)
+RunService.Heartbeat:Connect(updateList)
 
 -- Drag del hub
 local dragging, dragInput, dragStart, startPos
@@ -197,4 +189,10 @@ titleBar.InputBegan:Connect(function(input)
     end
 end)
 titleBar.InputChanged:Connect(function(input)
-    if input.UserInputType == Enum.UserInputType.MouseMovement
+    if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+        dragInput = input
+    end
+end)
+game:GetService("UserInputService").InputChanged:Connect(function(input)
+    if dragging and input == dragInput then update(input) end
+end)
